@@ -5,5 +5,15 @@
 - [PROGRESS.md](./PROGRESS.md): 学習進捗（随時更新）
 
 ディレクトリ構造
+```text
 .
-lessons/
+└─ lessons/
+   ├─ lesson_00/
+   │  ├─ LESSON_00.md
+   │  ├─ agent.py
+   │  └─ runner.py
+   └─ lesson_01/
+      ├─ LESSON_01.md
+      ├─ agent.py
+      └─ runner.py
+```
