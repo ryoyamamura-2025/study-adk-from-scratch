@@ -14,7 +14,7 @@ from google.adk.tools.mcp_tool.mcp_session_manager import (
     StreamableHTTPConnectionParams
 )
 from google.adk.skills import load_skills_from_dir
-from google.adk.tools.skill_toolset import SkillToolset, SkillDiscoveryMode
+from google.adk.tools.skill_toolset import SkillToolset
 from google.genai import types
 
 # -----------------------------
