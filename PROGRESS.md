@@ -5,17 +5,18 @@
 - **Lesson 0: 完了**
 - **Lesson 1: 完了**
 - **Lesson 2: 完了**
-- `SkillToolset` を使い、`list_skills → load_skill → Skill activation` の流れを確認済み。
-- `adk_additional_tools` により、Skill が activate された後だけ Printer MCP の `list_printers` Tool を利用可能にできることを確認済み。
-- Skill activation は Session State の `_adk_activated_skill_study_agent` に保持され、`root_agent.tools` 自体を書き換えずに Runtime 上で Tool が動的解決されることを確認済み。
-- 天気質問では `get_weather` に直接進み、Skill activation / Printer MCP 接続が起きない negative control も確認済み。
+- **Lesson 3: 完了**
+- `InMemoryArtifactService` を `Runner` に接続し、Artifact が Session / State とは別の Runtime Service で管理されることを確認済み。
+- 通常の Function Tool から `ToolContext` を通して `save_artifact` / `list_artifacts` / `load_artifact` を実行し、Artifact の保存・一覧取得・読み込みを確認済み。
+- Artifact の内容は `google.genai.types.Part` として扱い、同名保存時には version が追加されることを確認済み。
+- Artifact を操作しても Session State は空のままで、State と Artifact の責務が分離されていることを確認済み。
 
 ## 次に始めるセクション
 
-**Lesson 3: 未着手**
+**Lesson 4: Workspace / Sandbox — 未着手**
 
-次のセッションでは Lesson 3 のテーマ選定から開始する。
+次のセッションでは、Artifact 連携を前提にせず、Workspace / Sandbox の基礎から開始する。
 
-プロジェクトの到達イメージ上では、Skills の次段階として Workspace / Artifact / Sandbox を候補とする。
+主な確認対象は、Agent に Workspace を与える方法、Workspace を与えたときに利用可能な Tool や Runtime 構成がどう変わるか、shell / file 操作系 Tool がどこから提供されるか、Sandbox が何を隔離するのか。
 
-Long Horizon Harness の Skill catalog 事前注入や、ADK main branch の Skill discovery 拡張については、Callback / Harness 拡張を扱うセクションで再訪する。
+その後は、Callback / Lifecycle を独立した Lesson で扱い、さらに後段で Artifact と Workspace の I/O 接続を扱う予定。
