@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,6 +20,9 @@ from tools import (
     write,
 )
 
+from google.adk.skills import load_skills_from_dir
+from google.adk.tools.skill_toolset import SkillToolset
+
 from callback import before_agent, before_model, after_agent
 
 from google.genai import types
@@ -31,6 +36,17 @@ from google.genai import types
 #     environment=environment
 # )
 
+skills_dir = Path(__file__).parent / "skills"
+skills = load_skills_from_dir(skills_dir)
+
+# list_skillのツールを除外 --> Skillのプロンプトがシステム指示に入る
+skill_toolset = SkillToolset(
+    skills=skills,
+    tool_filter=[
+        "load_skill",
+        "load_skill_resource",
+    ],
+)
 
 root_agent = LlmAgent(
     name="study_agent",
@@ -47,7 +63,8 @@ root_agent = LlmAgent(
         read,
         write,
         bash,
-        process
+        process,
+        skill_toolset
     ],
     before_agent_callback=before_agent,
     after_agent_callback=after_agent,

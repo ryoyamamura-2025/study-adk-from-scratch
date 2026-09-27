@@ -92,18 +92,17 @@ async def main():
     print("\n=== TURN 1 ===")
 
     await run_message(
-        "workspaceにhello.txtを作成し、"
-        "内容を「hello from sandbox」にしてください。"
+        "利用可能なAgent Skill"
     )
     
-    # -----------------------------
-    # Turn 2
-    # -----------------------------
-    print("\n=== TURN 2 ===")
+    # # -----------------------------
+    # # Turn 2
+    # # -----------------------------
+    # print("\n=== TURN 2 ===")
 
-    await run_message(
-        "さっきのファイルをreadで読み込んで確認してください。"
-    )
+    # await run_message(
+    #     "さっきのファイルをreadで読み込んで確認してください。"
+    # )
 
 
 if __name__ == "__main__":
