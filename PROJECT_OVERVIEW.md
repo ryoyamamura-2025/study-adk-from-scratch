@@ -22,6 +22,15 @@
 - LangChain/Deep Agentsは「教材の段階設計」の参考、Google ADK/公式recipeは「ADK実装の正」として扱う。
 - 最終段階では、Agent configuration と runtime execution を分離し、Managed Agents APIに近い責務分割を自作する。
 
+### 実装・対話の進め方
+
+- 各Lessonは一度に完成形を提示せず、小さい実装単位に分けて進める。
+- 各ステップでは、まず次に実装するコード例と観察ポイントを示す。
+- コード実装・実行は学習者自身が行い、実行結果を確認してから次のステップへ進む。
+- 実行結果から内部挙動を確認し、「なぜその仕組みが必要か」を理解してから機能を追加する。
+- 実装方法に迷う場合は、Google ADK公式ドキュメントおよび公式/curated recipeを参考実装として確認する。
+- Assistantは原則として学習コードを直接変更せず、Lesson完了時のREADME / PROGRESS / 学びのドキュメント更新を担当する。
+
 ## 主な参照テキスト・ページ
 
 ### 教育設計の参考：LangChain / Deep Agents
@@ -64,7 +73,7 @@
   https://github.com/google/agents-cli/blob/main/skills/google-agents-cli-adk-code/references/samples.md
 
 - Long Horizon Harness recipe  
-  https://github.com/google/adk-samples/tree/main/core/python/long-horizon-harness
+  https://github.com/google/adk-recipes/tree/main/core/python/long-horizon-harness
 
 このrecipeは、sandbox、runtime-discovered `SKILL.md`、cross-session memory、guardrails、sub-agent delegation、durable HITL、secrets、context compactionなどを組み合わせた完成度の高いAgent Harnessとして参照する。教材では必要なpatternだけを段階的に理解・移植する。
 
