@@ -7,24 +7,24 @@
 ディレクトリ構造
 ```text
 .
+├─ PROJECT_OVERVIEW.md
+├─ PROGRESS.md
 └─ lessons/
-   ├─ lesson_00/
-   │  ├─ LESSON_00.md
-   │  ├─ agent.py
-   │  └─ runner.py
-   ├─ lesson_01/
-   │  ├─ LESSON_01.md
-   │  ├─ agent.py
-   │  └─ runner.py
-   ├─ lesson_02/
-   │  ├─ LESSON_02.md
-   │  ├─ agent.py
-   │  ├─ runner.py
-   │  └─ skills/
-   │     └─ printer-management/
-   │        └─ SKILL.md
-   └─ lesson_03/
-      ├─ LESSON_03.md
-      ├─ agent.py
-      └─ runner.py
+   ├─ lesson_00/   # Agent / Runner / Session / Event
+   ├─ lesson_01/   # Tool / MCP
+   ├─ lesson_02/   # SkillToolset
+   ├─ lesson_03/   # Artifact
+   └─ lesson_04/   # Environment / Workspace / Sandbox
+      ├─ LESSON_04.md
+      ├─ agent.py / runner.py
+      ├─ run_environments.py / run_context.py / run_provider.py
+      ├─ docker_environment.py
+      ├─ docker_sandbox_provider.py
+      ├─ tools/
+      │  ├─ file_ops.py
+      │  └─ processes/{terminal.py, process.py}
+      └─ horizon/   # Long Horizon Harness由来の実装
+         ├─ environment/{base.py, process.py, registry.py, sandbox.py, sandbox_process.py}
+         ├─ environment_context.py
+         └─ sandbox/runtime/{Dockerfile, server.py, protocol.py, entrypoint.sh}
 ```
