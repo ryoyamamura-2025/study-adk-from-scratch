@@ -16,11 +16,15 @@
    │  ├─ LESSON_01.md
    │  ├─ agent.py
    │  └─ runner.py
-   └─ lesson_02/
-      ├─ LESSON_02.md
+   ├─ lesson_02/
+   │  ├─ LESSON_02.md
+   │  ├─ agent.py
+   │  ├─ runner.py
+   │  └─ skills/
+   │     └─ printer-management/
+   │        └─ SKILL.md
+   └─ lesson_03/
+      ├─ LESSON_03.md
       ├─ agent.py
-      ├─ runner.py
-      └─ skills/
-         └─ printer-management/
-            └─ SKILL.md
+      └─ runner.py
 ```
