@@ -6,17 +6,19 @@
 - **Lesson 1: 完了**
 - **Lesson 2: 完了**
 - **Lesson 3: 完了**
-- `InMemoryArtifactService` を `Runner` に接続し、Artifact が Session / State とは別の Runtime Service で管理されることを確認済み。
-- 通常の Function Tool から `ToolContext` を通して `save_artifact` / `list_artifacts` / `load_artifact` を実行し、Artifact の保存・一覧取得・読み込みを確認済み。
-- Artifact の内容は `google.genai.types.Part` として扱い、同名保存時には version が追加されることを確認済み。
-- Artifact を操作しても Session State は空のままで、State と Artifact の責務が分離されていることを確認済み。
+- **Lesson 4: 完了**
+- ADK `LocalEnvironment` / `EnvironmentToolset` を動かし、Workspace の path boundary と Sandbox isolation が別物であることを確認済み。
+- 独自 `DockerEnvironment` と LHA の `SandboxEnvironment` / runtime を使い、host と隔離された Docker Sandbox 内で file / shell 操作が実行されることを確認済み。
+- `Environment lifetime != Sandbox lifetime`、Provider が provision / reattach を Environment から分離すること、`ProcessHandle` による長時間process管理を確認済み。
+- LHA の `ContextVar` に Environment をbindし、`active_environment()` を使う `read` / `write` / `bash` / `process` Tool を Agent に接続済み。
+- `ProcessRegistry` により、同じ ADK Session の別turnから background process を `list` / `poll` できることを確認済み。
 
 ## 次に始めるセクション
 
-**Lesson 4: Workspace / Sandbox — 未着手**
+**Lesson 5: Callback / Lifecycle — 未着手**
 
-次のセッションでは、Artifact 連携を前提にせず、Workspace / Sandbox の基礎から開始する。
+次は、Lesson 4 では固定していた Environment / Sandbox のbindを Runtime lifecycle に接続する。
 
-主な確認対象は、Agent に Workspace を与える方法、Workspace を与えたときに利用可能な Tool や Runtime 構成がどう変わるか、shell / file 操作系 Tool がどこから提供されるか、Sandbox が何を隔離するのか。
+主な確認対象は、Session State に保持した Sandbox ID から Provider を通して Environment をresolveする流れ、turnごとの `ContextVar` bind、Callback の実行順序と責務、SkillToolset を含む sessionごとの動的bind。
 
-その後は、Callback / Lifecycle を独立した Lesson で扱い、さらに後段で Artifact と Workspace の I/O 接続を扱う予定。
+Artifact と Workspace の I/O 接続は、その後の独立した Lesson で扱う予定。
