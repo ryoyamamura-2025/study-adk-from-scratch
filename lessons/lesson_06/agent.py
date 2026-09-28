@@ -24,6 +24,7 @@ from google.adk.skills import load_skills_from_dir
 from google.adk.tools.skill_toolset import SkillToolset
 
 from callback import before_agent, before_model, after_agent
+from plugin import IterationPlugin
 
 from google.genai import types
 
@@ -48,6 +49,12 @@ skill_toolset = SkillToolset(
     ],
 )
 
+# Tool output pruningを試すための関数
+def large_output() -> dict:
+    return {
+        "data": "X" * 5000
+    }
+
 root_agent = LlmAgent(
     name="study_agent",
     model=Gemini(model="gemini-3.5-flash"),
@@ -64,7 +71,8 @@ root_agent = LlmAgent(
         write,
         bash,
         process,
-        skill_toolset
+        # skill_toolset,
+        large_output
     ],
     before_agent_callback=before_agent,
     after_agent_callback=after_agent,
@@ -73,5 +81,8 @@ root_agent = LlmAgent(
 
 app = App(
     name="study_app",
-    root_agent=root_agent
+    root_agent=root_agent,
+    plugins=[
+        IterationPlugin()
+    ]
 )

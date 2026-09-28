@@ -1,6 +1,8 @@
 import atexit
 from docker_sandbox_provider import DockerSandboxProvider
 
+from google.genai import types
+
 from horizon.environment_context import (
     clear_active_environment,
     set_active_environment,
@@ -93,8 +95,66 @@ def _close_cached_environments():
 
 atexit.register(_close_cached_environments)
 
+# Tool output pruning のための処理
+PRUNE_MARKER = "[output pruned to reclaim context]"
+
+def prune_old_tool_outputs(llm_request):
+    contents = llm_request.contents
+
+    # 最新の本物のUserインプットを探す
+    latest_user_index = None
+
+    for i in range(len(contents) - 1, -1, -1):
+        content = contents[i]
+
+        # Userのインプット以外は飛ばす
+        if content.role != "user":
+            continue
+
+        parts = content.parts or []
+
+        has_text = any(part.text for part in parts)
+        has_function = any(
+            part.function_call or part.function_response
+            for part in parts
+        )
+
+        # 関数実行を含まずテキストを持つのが最後のUserメッセージ
+        if has_text and not has_function:
+            latest_user_index = i
+            break
+
+    if latest_user_index is None:
+        return
+
+    # 最新ユーザー発話より前 = 過去Turnだけを見る
+    for content in contents[:latest_user_index]:
+        for part in content.parts or []:
+            fr = part.function_response
+
+            if fr is None:
+                continue
+
+            size = len(str(fr.response))
+
+            if size < 1000:
+                continue
+
+            print(
+                f"[PRUNE] {fr.name}: "
+                f"{size} chars -> marker"
+            )
+
+            fr.response = {
+                "pruned": PRUNE_MARKER,
+            }
+    
 
 async def before_model(callback_context, llm_request):
+    # 過去の長いTool OutputのPrune
+    prune_old_tool_outputs(llm_request)
+
+    # プロンプト注入
     project_name = callback_context.state.get("project_name")
 
     runtime_context = (
@@ -106,6 +166,26 @@ async def before_model(callback_context, llm_request):
 
     llm_request.config.system_instruction = (
         f"{existing}\n\n{runtime_context}"
+    )
+
+    # -----------------------------
+    # Volatile tier
+    # -----------------------------
+    iteration = callback_context.state.get("iteration")
+
+    volatile = (
+        "<system-reminder>\n"
+        f"Iteration: {iteration}\n"
+        "</system-reminder>"
+    )
+
+    llm_request.contents.append(
+        types.Content(
+            role="user",
+            parts=[
+                types.Part(text=volatile),
+            ],
+        )
     )
 
     print("\n[CALLBACK] before_model")
