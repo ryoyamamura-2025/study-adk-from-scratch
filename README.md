@@ -27,11 +27,18 @@
    │     ├─ environment/{base.py, process.py, registry.py, sandbox.py, sandbox_process.py}
    │     ├─ environment_context.py
    │     └─ sandbox/runtime/{Dockerfile, server.py, protocol.py, entrypoint.sh}
-   └─ lesson_05/   # Callback / Lifecycle
-      ├─ LESSON_05.md
+   ├─ lesson_05/   # Callback / Lifecycle
+   │  ├─ LESSON_05.md
+   │  ├─ agent.py / runner.py
+   │  ├─ callback.py
+   │  ├─ docker_sandbox_provider.py
+   │  ├─ tools/
+   │  └─ horizon/   # Lesson 4から継続利用するLHA由来実装
+   └─ lesson_06/   # Context Management
+      ├─ LESSON_06.md
       ├─ agent.py / runner.py
-      ├─ callback.py
-      ├─ docker_sandbox_provider.py
+      ├─ callback.py / plugin.py
+      ├─ skills/
       ├─ tools/
-      └─ horizon/   # Lesson 4から継続利用するLHA由来実装
+      └─ horizon/   # Sandbox / Environment実装を継続利用
 ```
