@@ -8,19 +8,19 @@
 - **Lesson 3: 完了**
 - **Lesson 4: 完了**
 - **Lesson 5: 完了**
-- Agent / Model / Tool Callback の発火単位と実行順序を確認し、`None` では通常続行、非 `None` の返却では before 側で short-circuit、after 側で結果へ介入できることを確認済み。
-- Lesson 4 で Runner から固定的に行っていた Environment bind を `before_agent_callback` へ移し、Runtime lifecycle に接続済み。
-- `(user_id, session_id)` 単位の Environment cache と `DockerSandboxProvider` を使い、**1 Session = 1 Sandbox** の分離を確認済み。
-- `before_agent` で Session に対応する Environment を `ContextVar` へ bindし、`read` / `write` / `bash` / `process` Tool が `active_environment()` から利用する流れを確認済み。
-- `ContextVar` は Session storage ではなく、現在の async execution context へ runtime dependency を渡す仕組みであり、turn / invocation ごとに re-bind が必要であることを確認済み。
-- Sandbox persistence と process 内 Environment cache は別責務であり、cache は特に remote Sandbox で connection reuse / discovery / health check / auth 等のコスト削減に重要であることを整理済み。
+- **Lesson 6: 完了**
+- `before_model_callback` で `LlmRequest` の `system_instruction` / `contents` / Tool declaration を観察し、Session Events から Model Call ごとの context が再構成されることを確認済み。
+- Session State から Runtime Context を注入し、`instruction` / `static_instruction`、固定 context / 動的 context の役割を整理済み。
+- Skill catalog の system prompt 注入と `load_skill` による progressive disclosure を確認し、Skill を Context Management の一部として理解済み。
+- Long Horizon Harness の context を **static / context / volatile** の3層で整理し、volatile reminder を `contents` 末尾へ注入する構造を確認済み。
+- 最小 `IterationPlugin` を作成し、App Plugin → Session State → volatile context の流れを確認済み。raw `session.state` mutation と Event `state_delta` による永続化の違いも確認済み。
+- 古い大容量 Tool result のみを Model Context から除く Tool output pruning を実装し、Session history と Model request projection を分けて考えることを確認済み。
+- LHA の overflow / spill は Tool 実行時の巨大 output 対策、Tool Prune は古い result の context 削減であり、Compaction はさらに別レイヤーであることを整理済み。
 
 ## 次に始めるセクション
 
-**Lesson 6: Context Management — 未着手**
+**Lesson 7: Artifact ↔ Workspace I/O — 未着手**
 
-次は、Agent が各 Model Call で「何を context として見るか」を扱う。
+次は、ADK Artifact と Sandbox / Workspace を接続し、入力ファイルを Workspace へ展開して Agent が処理し、生成物を Artifact として外へ戻す一連の I/O を学ぶ。
 
-主な確認対象は、`before_model_callback` を使った system instruction / 動的 context の組み立て、Skill や session情報などの runtime context 注入、不要・古い context の整理、および Long Horizon Harness の context management 実装との比較。
-
-Artifact と Workspace の I/O 接続は、その後の独立した Lesson で扱う予定。
+Lesson 4 では意図的に扱わなかった `input / work / output` のような Workspace 上のファイル配置や、Artifact と Workspace の責務境界をここで整理する。
