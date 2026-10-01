@@ -1,8 +1,5 @@
-import asyncio
 import atexit
 import mimetypes
-import shlex
-import time
 from pathlib import Path
 
 from docker_sandbox_provider import DockerSandboxProvider
@@ -18,7 +15,7 @@ from horizon.environment_context import (
 provider = DockerSandboxProvider()
 
 _environment_cache = {}
-_output_watchers = {}
+_output_snapshots = {}
 
 
 async def _ensure_environment(
@@ -53,41 +50,49 @@ async def _ensure_environment(
     return environment
 
 
-async def _wait_for_watcher_ready(
-    watcher,
-    timeout: float = 5.0,
-) -> int:
-    """Wait until inotifywait has finished installing its watches."""
-    offset = 0
-    text = ""
-    deadline = time.monotonic() + timeout
+async def _snapshot_output(
+    environment,
+    output_dir: Path,
+) -> dict[str, tuple[int, int]]:
+    """Collect lightweight metadata for files under output/."""
+    snapshot = {}
 
-    while time.monotonic() < deadline:
-        data, offset, exit_code = await watcher.read(
-            offset=offset,
+    async def walk(directory: Path):
+        entries, truncated = await environment.list_directory(
+            directory,
+            limit=10_000,
         )
 
-        if data:
-            text += data.decode(
-                "utf-8",
-                errors="replace",
-            )
-
-        if "Watches established." in text:
-            return offset
-
-        if exit_code is not None:
+        if truncated:
             raise RuntimeError(
-                "output watcher exited before becoming ready:\n"
-                f"{text.strip()}"
+                f"too many entries in one directory: {directory}"
             )
 
-        await asyncio.sleep(0.05)
+        for entry in entries:
+            path = directory / entry["name"]
 
-    await watcher.kill()
-    raise TimeoutError(
-        "output watcher did not become ready"
-    )
+            if entry["kind"] == "dir":
+                await walk(path)
+                continue
+
+            if entry["kind"] != "file":
+                continue
+
+            relative = path.relative_to(
+                output_dir
+            ).as_posix()
+
+            snapshot[relative] = (
+                int(entry["size"]),
+                int(entry["mtime"]),
+            )
+
+    try:
+        await walk(output_dir)
+    except FileNotFoundError:
+        return {}
+
+    return snapshot
 
 
 async def before_agent(callback_context):
@@ -113,25 +118,19 @@ async def before_agent(callback_context):
     output_dir = environment.working_dir / "output"
     await environment.make_dir(output_dir)
 
-    watcher = await environment.spawn_process(
-        (
-            "exec inotifywait -m -r "
-            "-e close_write "
-            "-e moved_to "
-            "--format '%w%f' "
-            f"{shlex.quote(str(output_dir))}"
-        )
+    snapshot = await _snapshot_output(
+        environment,
+        output_dir,
     )
 
-    event_offset = await _wait_for_watcher_ready(
-        watcher
-    )
-
-    _output_watchers[
+    _output_snapshots[
         callback_context.invocation_id
-    ] = (watcher, event_offset)
+    ] = snapshot
 
-    print("  output watcher: ready")
+    print(
+        "  output snapshot:",
+        f"{len(snapshot)} files",
+    )
 
     return None
 
@@ -142,61 +141,42 @@ async def after_agent(callback_context):
     environment = active_environment()
     output_dir = environment.working_dir / "output"
 
-    watcher_info = _output_watchers.pop(
+    before = _output_snapshots.pop(
         callback_context.invocation_id,
-        None,
+        {},
     )
 
     try:
-        if watcher_info is None:
-            print("  output watcher: not found")
-            return None
-
-        watcher, event_offset = watcher_info
-
-        # Stop the watcher first so all pending output is flushed.
-        await watcher.kill()
-
-        raw, _, _ = await watcher.read(
-            offset=event_offset,
+        after = await _snapshot_output(
+            environment,
+            output_dir,
         )
 
-        changed_paths = {
-            line.strip()
-            for line in raw.decode(
-                "utf-8",
-                errors="replace",
-            ).splitlines()
-            if line.strip()
-        }
+        changed = sorted(
+            filename
+            for filename, metadata in after.items()
+            if before.get(filename) != metadata
+        )
+
+        deleted = sorted(
+            set(before) - set(after)
+        )
 
         print(
             "  changed outputs:",
-            sorted(changed_paths),
+            changed,
         )
 
-        for raw_path in sorted(changed_paths):
-            path = Path(raw_path)
+        if deleted:
+            print(
+                "  deleted outputs:",
+                deleted,
+            )
 
-            try:
-                relative = path.relative_to(
-                    output_dir
-                )
-            except ValueError:
-                continue
+        for filename in changed:
+            path = output_dir / filename
 
-            if not relative.parts:
-                continue
-
-            try:
-                data = await environment.read_file(path)
-            except (
-                FileNotFoundError,
-                IsADirectoryError,
-            ):
-                continue
-
-            filename = relative.as_posix()
+            data = await environment.read_file(path)
 
             mime_type, _ = mimetypes.guess_type(
                 filename

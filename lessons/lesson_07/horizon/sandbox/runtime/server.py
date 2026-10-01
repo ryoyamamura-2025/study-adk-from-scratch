@@ -235,7 +235,7 @@ async def list_files(
                 name=entry.name,
                 kind=kind,
                 size=int(st.st_size),
-                mtime=int(st.st_mtime),
+                mtime=int(st.st_mtime_ns),
             )
         )
     return ListResponse(entries=entries, truncated=truncated)
