@@ -12,6 +12,7 @@ class WorkspaceIOPlugin(BasePlugin):
     async def on_user_message_callback(self, *, invocation_context, user_message):
         print("\n[PLUGIN] on_user_message")
 
+        input_names = []
         for i, part in enumerate(user_message.parts or []):
 
             if part.inline_data is None:
@@ -78,6 +79,25 @@ class WorkspaceIOPlugin(BasePlugin):
             )
 
             print(self._pending_inputs)
+            input_names.append(filename)
+
+        # 添付があったターンのUser messageそのものに残す
+        if input_names:
+            files = "\n".join(
+                f"- input/{name}"
+                for name in input_names
+            )
+
+            reminder = (
+                "<system-reminder>\n"
+                "Attached files are available in the workspace:\n"
+                f"{files}\n"
+                "</system-reminder>"
+            )
+
+            user_message.parts.append(
+                types.Part(text=reminder)
+            )
 
         # inline_data は変更しない
         return None
@@ -97,13 +117,13 @@ class WorkspaceIOPlugin(BasePlugin):
 
         invocation_id = callback_context.invocation_id
 
+        # Workspaceにマテリアライズ
         pending = self._pending_inputs.pop(
            invocation_id,
             [],
         )
 
         if not pending:
-            print("マテリアライズするものはない")
             return None
 
         environment = active_environment()

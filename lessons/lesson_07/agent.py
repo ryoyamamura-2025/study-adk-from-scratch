@@ -53,10 +53,10 @@ root_agent = LlmAgent(
     instruction="あなたは優秀なアシスタントです",
     tools=[
         # environment_toolset
-        # read,
-        # write,
-        # bash,
-        # process,
+        read,
+        write,
+        bash,
+        process,
         # skill_toolset,
     ],
     before_agent_callback=before_agent,

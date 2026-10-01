@@ -206,18 +206,18 @@ async def before_model(callback_context, llm_request):
     # print("\n--- contents ---")
     # print("count:", len(llm_request.contents))
 
-    # for i, content in enumerate(llm_request.contents):
-    #     print(f"[{i}] role={content.role}")
+    for i, content in enumerate(llm_request.contents):
+        print(f"[{i}] role={content.role}")
 
-    #     for part in content.parts or []:
-    #         if part.text:
-    #             print("  text:", part.text)
+        for part in content.parts or []:
+            if part.text:
+                print("  text:", part.text)
 
-    #         if part.function_call:
-    #             print("  function_call:", part.function_call)
+            if part.function_call:
+                print("  function_call:", part.function_call)
 
-    #         if part.function_response:
-    #             print("  function_response:", part.function_response)
+            if part.function_response:
+                print("  function_response:", part.function_response)
 
     # print("\n--- tools ---")
     # tools = llm_request.config.tools or []

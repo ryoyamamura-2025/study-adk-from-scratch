@@ -107,8 +107,12 @@ async def main():
     )
 
     await run_message(
-       "以下の画像は何？",
+       "以下の画像を確認",
         attachment=attachment,
+    )
+
+    await run_message(
+       "lsで画像のフルパスを確認",
     )
 
 if __name__ == "__main__":
