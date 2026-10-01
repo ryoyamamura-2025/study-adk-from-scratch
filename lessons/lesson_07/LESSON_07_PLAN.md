@@ -1,5 +1,17 @@
 # Lesson 7 Plan — Artifact ↔ Workspace I/O Pipeline
 
+> **Status: 完了（2026-10-02）**  
+> このファイルは Lesson 7 開始時の設計・実装計画を残すためのもの。最終的な学びと実装結果は [LESSON_07.md](./LESSON_07.md) を参照。
+>
+> 最終実装では、当初案から以下を変更した。
+>
+> - Step 8 の Skill based processing は意図的にスキップ。
+> - volatile reminder は「新規 input のみ」ではなく、現在の `input/` の file list を各 Model Call の末尾に追加。
+> - output は `before_agent / after_agent` の `filename + size + mtime` metadata snapshot を比較し、変更された file のみ Artifact 化。
+> - filesystem watcher / inotify は検討したが採用しなかった。
+> - host export は最終 output Artifact を対象とし、Agent の外側の Runner で実施。
+> - Sandbox runtime の `server.py` は変更しない。
+
 ## Goal
 
 Lesson 7 では、ユーザーが添付したファイルを Agent が Workspace 上で処理し、最終成果物をユーザーへ返すまでの **入力 → 処理 → 出力** パイプラインを一気通貫で接続する。

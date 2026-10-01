@@ -34,11 +34,19 @@
    │  ├─ docker_sandbox_provider.py
    │  ├─ tools/
    │  └─ horizon/   # Lesson 4から継続利用するLHA由来実装
-   └─ lesson_06/   # Context Management
-      ├─ LESSON_06.md
+   ├─ lesson_06/   # Context Management
+   │  ├─ LESSON_06.md
+   │  ├─ agent.py / runner.py
+   │  ├─ callback.py / plugin.py
+   │  ├─ skills/
+   │  ├─ tools/
+   │  └─ horizon/   # Sandbox / Environment実装を継続利用
+   └─ lesson_07/   # Artifact ↔ Workspace I/O
+      ├─ LESSON_07.md
+      ├─ LESSON_07_PLAN.md
       ├─ agent.py / runner.py
       ├─ callback.py / plugin.py
-      ├─ skills/
+      ├─ docker_sandbox_provider.py
       ├─ tools/
       └─ horizon/   # Sandbox / Environment実装を継続利用
 ```
