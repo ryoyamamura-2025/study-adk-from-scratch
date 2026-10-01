@@ -12,3 +12,6 @@ wheels/
 *.jpg
 *.png
 *.jpeg
+
+# Lesson outputs
+lessons/lesson_07/host_output/

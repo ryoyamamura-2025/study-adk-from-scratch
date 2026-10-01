@@ -1,5 +1,10 @@
+import asyncio
 import atexit
 import mimetypes
+import shlex
+import time
+from pathlib import Path
+
 from docker_sandbox_provider import DockerSandboxProvider
 
 from google.genai import types
@@ -7,12 +12,14 @@ from google.genai import types
 from horizon.environment_context import (
     clear_active_environment,
     set_active_environment,
-    active_environment
+    active_environment,
 )
 
 provider = DockerSandboxProvider()
 
 _environment_cache = {}
+_output_watchers = {}
+
 
 async def _ensure_environment(
     user_id: str,
@@ -45,6 +52,44 @@ async def _ensure_environment(
 
     return environment
 
+
+async def _wait_for_watcher_ready(
+    watcher,
+    timeout: float = 5.0,
+) -> int:
+    """Wait until inotifywait has finished installing its watches."""
+    offset = 0
+    text = ""
+    deadline = time.monotonic() + timeout
+
+    while time.monotonic() < deadline:
+        data, offset, exit_code = await watcher.read(
+            offset=offset,
+        )
+
+        if data:
+            text += data.decode(
+                "utf-8",
+                errors="replace",
+            )
+
+        if "Watches established." in text:
+            return offset
+
+        if exit_code is not None:
+            raise RuntimeError(
+                "output watcher exited before becoming ready:\n"
+                f"{text.strip()}"
+            )
+
+        await asyncio.sleep(0.05)
+
+    await watcher.kill()
+    raise TimeoutError(
+        "output watcher did not become ready"
+    )
+
+
 async def before_agent(callback_context):
     print("\n[CALLBACK] before_agent")
     session = callback_context.session
@@ -65,7 +110,31 @@ async def before_agent(callback_context):
         environment.sandbox_name,
     )
 
+    output_dir = environment.working_dir / "output"
+    await environment.make_dir(output_dir)
+
+    watcher = await environment.spawn_process(
+        (
+            "exec inotifywait -m -r "
+            "-e close_write "
+            "-e moved_to "
+            "--format '%w%f' "
+            f"{shlex.quote(str(output_dir))}"
+        )
+    )
+
+    event_offset = await _wait_for_watcher_ready(
+        watcher
+    )
+
+    _output_watchers[
+        callback_context.invocation_id
+    ] = (watcher, event_offset)
+
+    print("  output watcher: ready")
+
     return None
+
 
 async def after_agent(callback_context):
     print("\n[CALLBACK] after_agent")
@@ -73,48 +142,88 @@ async def after_agent(callback_context):
     environment = active_environment()
     output_dir = environment.working_dir / "output"
 
+    watcher_info = _output_watchers.pop(
+        callback_context.invocation_id,
+        None,
+    )
+
     try:
-        entries, truncated = await environment.list_directory(
-            output_dir,
-            limit=100,
-        )
-    except FileNotFoundError:
-        print("  output directory not found")
-        entries = []
+        if watcher_info is None:
+            print("  output watcher: not found")
+            return None
 
-    print("  output entries:", entries)
+        watcher, event_offset = watcher_info
 
-    for entry in entries:
-        if entry["kind"] != "file":
-            continue
+        # Stop the watcher first so all pending output is flushed.
+        await watcher.kill()
 
-        filename = entry["name"]
-        path = output_dir / filename
-
-        data = await environment.read_file(path)
-
-        mime_type, _ = mimetypes.guess_type(filename)
-        if mime_type is None:
-            mime_type = "application/octet-stream"
-
-        artifact = types.Part.from_bytes(
-            data=data,
-            mime_type=mime_type,
+        raw, _, _ = await watcher.read(
+            offset=event_offset,
         )
 
-        version = await callback_context.save_artifact(
-            filename=filename,
-            artifact=artifact,
-        )
+        changed_paths = {
+            line.strip()
+            for line in raw.decode(
+                "utf-8",
+                errors="replace",
+            ).splitlines()
+            if line.strip()
+        }
 
         print(
-            f"  saved artifact: "
-            f"{filename} version={version}"
+            "  changed outputs:",
+            sorted(changed_paths),
         )
 
-    clear_active_environment()
+        for raw_path in sorted(changed_paths):
+            path = Path(raw_path)
 
-    return None
+            try:
+                relative = path.relative_to(
+                    output_dir
+                )
+            except ValueError:
+                continue
+
+            if not relative.parts:
+                continue
+
+            try:
+                data = await environment.read_file(path)
+            except (
+                FileNotFoundError,
+                IsADirectoryError,
+            ):
+                continue
+
+            filename = relative.as_posix()
+
+            mime_type, _ = mimetypes.guess_type(
+                filename
+            )
+            if mime_type is None:
+                mime_type = "application/octet-stream"
+
+            artifact = types.Part.from_bytes(
+                data=data,
+                mime_type=mime_type,
+            )
+
+            version = await callback_context.save_artifact(
+                filename=filename,
+                artifact=artifact,
+            )
+
+            print(
+                f"  saved artifact: "
+                f"{filename} version={version}"
+            )
+
+        return None
+
+    finally:
+        clear_active_environment()
+
 
 def _close_cached_environments():
     print("\n[environment] process cleanup")
@@ -139,8 +248,10 @@ def _close_cached_environments():
 
 atexit.register(_close_cached_environments)
 
+
 # Tool output pruning のための処理
 PRUNE_MARKER = "[output pruned to reclaim context]"
+
 
 def prune_old_tool_outputs(llm_request):
     contents = llm_request.contents
@@ -192,39 +303,12 @@ def prune_old_tool_outputs(llm_request):
             fr.response = {
                 "pruned": PRUNE_MARKER,
             }
-    
+
 
 async def before_model(callback_context, llm_request):
     # 過去の長いTool OutputのPrune
     # prune_old_tool_outputs(llm_request)
 
     print("\n[CALLBACK] before_model")
-
-    # print("\n--- system_instruction ---")
-    # print(llm_request.config.system_instruction)
-
-    # print("\n--- contents ---")
-    # print("count:", len(llm_request.contents))
-
-    for i, content in enumerate(llm_request.contents):
-        print(f"[{i}] role={content.role}")
-
-        for part in content.parts or []:
-            if part.text:
-                print("  text:", part.text)
-
-            if part.function_call:
-                print("  function_call:", part.function_call)
-
-            if part.function_response:
-                print("  function_response:", part.function_response)
-
-    # print("\n--- tools ---")
-    # tools = llm_request.config.tools or []
-    # print("count:", len(tools))
-
-    # for tool in tools:
-    #     for declaration in tool.function_declarations or []:
-    #         print(" ", declaration.name)
 
     return None

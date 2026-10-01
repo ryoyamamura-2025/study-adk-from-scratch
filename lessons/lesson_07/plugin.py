@@ -1,28 +1,44 @@
 import copy
 from pathlib import Path
+
 from google.adk.plugins.base_plugin import BasePlugin
 from google.genai import types
+
 from horizon.environment_context import active_environment
+
 
 class WorkspaceIOPlugin(BasePlugin):
     def __init__(self):
         super().__init__(name="workspace_io_plugin")
         self._pending_inputs = {}
 
-    async def on_user_message_callback(self, *, invocation_context, user_message):
+    async def on_user_message_callback(
+        self,
+        *,
+        invocation_context,
+        user_message,
+    ):
         print("\n[PLUGIN] on_user_message")
 
-        input_names = []
-        for i, part in enumerate(user_message.parts or []):
-
+        for i, part in enumerate(
+            user_message.parts or []
+        ):
             if part.inline_data is None:
                 continue
-            
+
             inline_data = part.inline_data
+
+            filename = (
+                inline_data.display_name
+                or (
+                    "attachment_"
+                    f"{invocation_context.invocation_id}_{i}"
+                )
+            )
 
             print(
                 f"  attachment[{i}]:",
-                f"name={inline_data.display_name}",
+                f"name={filename}",
                 f"mime_type={inline_data.mime_type}",
                 f"size={len(inline_data.data or b'')} bytes",
             )
@@ -46,18 +62,17 @@ class WorkspaceIOPlugin(BasePlugin):
             #             )
             #         )
             #     )
-          
-            artifact_service = invocation_context.artifact_service
-            
-            if artifact_service is None:
-                print("  artifact service is not configured")
-                continue
-            
-            filename = (
-                inline_data.display_name
-                or f"attachment_{invocation_context.invocation_id}_{i}"
+
+            artifact_service = (
+                invocation_context.artifact_service
             )
-            
+
+            if artifact_service is None:
+                print(
+                    "  artifact service is not configured"
+                )
+                continue
+
             version = await artifact_service.save_artifact(
                 app_name=invocation_context.app_name,
                 user_id=invocation_context.user_id,
@@ -65,7 +80,7 @@ class WorkspaceIOPlugin(BasePlugin):
                 filename=filename,
                 artifact=copy.copy(part),
             )
-            
+
             print(
                 f"  saved input artifact: "
                 f"{filename} version={version}"
@@ -78,57 +93,30 @@ class WorkspaceIOPlugin(BasePlugin):
                 (filename, version)
             )
 
-            print(self._pending_inputs)
-            input_names.append(filename)
-
-        # 添付があったターンのUser messageそのものに残す
-        if input_names:
-            files = "\n".join(
-                f"- input/{name}"
-                for name in input_names
-            )
-
-            reminder = (
-                "<system-reminder>\n"
-                "Attached files are available in the workspace:\n"
-                f"{files}\n"
-                "</system-reminder>"
-            )
-
-            user_message.parts.append(
-                types.Part(text=reminder)
-            )
-
         # inline_data は変更しない
         return None
 
-    # async def before_run_callback(self, *, invocation_context):
-    #     print("\n[PLUGIN] before_run")
-    #     print("  invocation_id:", invocation_context.invocation_id)
-    #     print("  session events:", len(invocation_context.session.events))
-    #     return None
-
-    # async def before_agent_callback(self, *, agent, callback_context):
-    #     print(f"\n[PLUGIN] before_agent ({agent.name})")
-    #     return None
-
-    async def before_model_callback(self, *, callback_context, llm_request):
+    async def before_model_callback(
+        self,
+        *,
+        callback_context,
+        llm_request,
+    ):
         print("\n[PLUGIN] before_model")
 
         invocation_id = callback_context.invocation_id
+        environment = active_environment()
+        input_dir = environment.working_dir / "input"
 
-        # Workspaceにマテリアライズ
+        # このInvocationで新しく添付されたファイルだけ
+        # Artifact -> workspace/input にmaterializeする。
         pending = self._pending_inputs.pop(
-           invocation_id,
+            invocation_id,
             [],
         )
 
-        if not pending:
-            return None
-
-        environment = active_environment()
-        input_dir = environment.working_dir / "input"
-        await environment.make_dir(input_dir)
+        if pending:
+            await environment.make_dir(input_dir)
 
         for filename, version in pending:
             artifact = await callback_context.load_artifact(
@@ -136,7 +124,10 @@ class WorkspaceIOPlugin(BasePlugin):
                 version,
             )
 
-            if artifact is None or artifact.inline_data is None:
+            if (
+                artifact is None
+                or artifact.inline_data is None
+            ):
                 print(
                     f"  failed to load input artifact: "
                     f"{filename} version={version}"
@@ -152,16 +143,52 @@ class WorkspaceIOPlugin(BasePlugin):
             )
 
             print(
-               f"  materialized input: "
+                f"  materialized input: "
                 f"{safe_name} -> {target}"
             )
 
+        # LHAと同じ考え方で、現在のinput/を
+        # volatileなsystem-reminderとして毎model callで末尾に入れる。
+        try:
+            entries, truncated = (
+                await environment.list_directory(
+                    input_dir,
+                    limit=100,
+                )
+            )
+        except FileNotFoundError:
+            entries = []
+            truncated = False
+
+        input_names = [
+            entry["name"]
+            for entry in entries
+            if entry["kind"] == "file"
+        ]
+
+        if input_names:
+            files = "\n".join(
+                f"- input/{name}"
+                for name in input_names
+            )
+
+            if truncated:
+                files += "\n- ..."
+
+            reminder = (
+                "<system-reminder>\n"
+                "Files from the user are available in the workspace:\n"
+                f"{files}\n"
+                "</system-reminder>"
+            )
+
+            llm_request.contents.append(
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part(text=reminder)
+                    ],
+                )
+            )
+
         return None
-
-    # async def after_agent_callback(self, *, agent, callback_context):
-    #     print(f"\n[PLUGIN] after_agent ({agent.name})")
-    #     return None
-
-    # async def after_run_callback(self, *, invocation_context):
-    #     print("\n[PLUGIN] after_run")
-    #     return None

@@ -40,6 +40,27 @@ from google.genai import types
 #     ],
 # )
 
+WORKSPACE_PROTOCOL = """
+あなたは優秀なアシスタントです。
+
+# Workspace File Protocol
+
+Workspace内のファイルは次のルールで扱ってください。
+
+- input/
+  ユーザーから受け取ったファイルです。原則として読み取り専用です。
+
+- work/
+  作業途中の中間ファイルや一時ファイルを保存する場所です。
+
+- output/
+  ユーザーへ返す最終成果物だけを保存する場所です。
+  完成したファイルは必ずここに保存してください。
+
+ファイル操作ではWorkspaceからの相対パスを使用してください。
+""".strip()
+
+
 root_agent = LlmAgent(
     name="study_agent",
     model=Gemini(model="gemini-3.5-flash"),
@@ -50,7 +71,7 @@ root_agent = LlmAgent(
     # generate_content_config=types.GenerateContentConfig(
     #     max_output_tokens=256,
     # ),
-    instruction="あなたは優秀なアシスタントです",
+    instruction=WORKSPACE_PROTOCOL,
     tools=[
         # environment_toolset
         read,
@@ -61,7 +82,7 @@ root_agent = LlmAgent(
     ],
     before_agent_callback=before_agent,
     after_agent_callback=after_agent,
-    before_model_callback=before_model
+    before_model_callback=before_model,
 )
 
 app = App(
@@ -69,5 +90,5 @@ app = App(
     root_agent=root_agent,
     plugins=[
         WorkspaceIOPlugin()
-    ]
+    ],
 )
