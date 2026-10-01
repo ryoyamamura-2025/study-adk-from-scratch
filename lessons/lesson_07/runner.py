@@ -95,18 +95,20 @@ async def main():
     # -----------------------------
     print("\n=== TURN 1 ===")
 
-    attachment = types.Part(
-        inline_data=types.Blob(
-            data=b"Lesson7 attachment test",
-            mime_type="text/plain",
-            display_name="sample.txt",
-        )
-    )
-
-    await run_message(
-       "添付ファイルの内容を教えてください。bashToolは一切使わないで",
-        attachment=attachment,
-    )
+    # text/plain の inline_data は ADK message には残るが、
+    # Gemini が内容を認識しなかったため、本題から外れる調査として一旦保留。
+    # attachment = types.Part(
+    #     inline_data=types.Blob(
+    #         data=b"Lesson7 attachment test",
+    #         mime_type="text/plain",
+    #         display_name="sample.txt",
+    #     )
+    # )
+    #
+    # await run_message(
+    #    "添付ファイルの内容を教えてください。bashToolは一切使わないで",
+    #     attachment=attachment,
+    # )
     
 
 if __name__ == "__main__":
