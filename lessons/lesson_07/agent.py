@@ -7,7 +7,7 @@ load_dotenv()
 from google.adk.apps import App
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
-# from google.adk.models import Gemini
+from google.adk.models import Gemini
 # from google.adk.environment import LocalEnvironment
 # from docker_environment import DockerEnvironment
 # from google.adk.tools.environment import EnvironmentToolset
@@ -24,7 +24,7 @@ from google.adk.skills import load_skills_from_dir
 from google.adk.tools.skill_toolset import SkillToolset
 
 from callback import before_agent, before_model, after_agent
-# from plugin import IterationPlugin
+from plugin import WorkspaceIOPlugin
 
 from google.genai import types
 
@@ -42,21 +42,21 @@ from google.genai import types
 
 root_agent = LlmAgent(
     name="study_agent",
-    # model=Gemini(model="gemini-3.5-flash"),
-    model=LiteLlm(
-        # model="vertex_ai/openai/gpt-oss-120b-maas"
-        model="vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas",
-    ),
-    generate_content_config=types.GenerateContentConfig(
-        max_output_tokens=256,
-    ),
+    model=Gemini(model="gemini-3.5-flash"),
+    # model=LiteLlm(
+    #     model="vertex_ai/openai/gpt-oss-120b-maas"
+    #     # model="vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas",
+    # ),
+    # generate_content_config=types.GenerateContentConfig(
+    #     max_output_tokens=256,
+    # ),
     instruction="あなたは優秀なアシスタントです",
     tools=[
         # environment_toolset
-        read,
-        write,
-        bash,
-        process,
+        # read,
+        # write,
+        # bash,
+        # process,
         # skill_toolset,
     ],
     before_agent_callback=before_agent,
@@ -67,7 +67,7 @@ root_agent = LlmAgent(
 app = App(
     name="study_app",
     root_agent=root_agent,
-    # plugins=[
-    #     IterationPlugin()
-    # ]
+    plugins=[
+        WorkspaceIOPlugin()
+    ]
 )

@@ -196,10 +196,9 @@ def prune_old_tool_outputs(llm_request):
 
 async def before_model(callback_context, llm_request):
     # 過去の長いTool OutputのPrune
-    prune_old_tool_outputs(llm_request)
+    # prune_old_tool_outputs(llm_request)
 
     print("\n[CALLBACK] before_model")
-
 
     # print("\n--- system_instruction ---")
     # print(llm_request.config.system_instruction)

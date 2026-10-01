@@ -32,12 +32,16 @@ runner = Runner(
 # print(type(runner.session_service).__name__)
 # print(type(runner.artifact_service).__name__)
 
-async def run_message(text: str):
+async def run_message(text: str, attachment=None):
+    parts=[types.Part(text=text)]
+
+    # 添付を見る
+    if attachment is not None:
+        parts.append(attachment)
+
     message = types.Content(
         role="user",
-        parts=[
-            types.Part(text=text),
-        ],
+        parts=parts
     )
 
     async for event in runner.run_async(
@@ -91,8 +95,17 @@ async def main():
     # -----------------------------
     print("\n=== TURN 1 ===")
 
+    attachment = types.Part(
+        inline_data=types.Blob(
+            data=b"Lesson7 attachment test",
+            mime_type="text/plain",
+            display_name="sample.txt",
+        )
+    )
+
     await run_message(
-        "output/report.txt を作成して、内容を「Lesson7 artifact test」にしてください。"
+       "添付ファイルの内容を教えてください。bashToolは一切使わないで",
+        attachment=attachment,
     )
     
 

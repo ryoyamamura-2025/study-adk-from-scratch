@@ -55,7 +55,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import Response
 
 try:
-    from lessons.lesson_04.horizon.sandbox.runtime.protocol import (
+    from protocol import (
         RUNTIME_PORT,
         ExecRequest,
         ExecResponse,
