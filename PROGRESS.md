@@ -19,8 +19,12 @@
 
 ## 次に始めるセクション
 
-**未定**
+**Lesson 8: ADK API Server / Final Integration — 未着手**
 
-Lesson 7 までで、Agent / Tool / MCP / Skill / Artifact / Workspace / Sandbox / Callback / Context Management / File I/O pipeline の基礎を一通り接続した。
+Lesson 8 をこの学習プロジェクトの最終 Lesson とする。
 
-次の学習テーマは、次セッションで決める。
+Lesson 0〜7 で作成した Agent / Tool / MCP / Skill / Artifact / Workspace / Sandbox / Callback / Plugin / Context Management / File I/O を、ADK 標準 API server に載せて外部 client から利用できる状態まで統合する。
+
+自前 FastAPI API の設計は行わず、ADK 標準 serving boundary を使って Session / chat / streaming / attachment / output Artifact の E2E を確認する。
+
+詳細は `lessons/lesson_08/LESSON_08_PLAN.md` を参照。
