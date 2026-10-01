@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -95,19 +96,20 @@ async def main():
     # -----------------------------
     print("\n=== TURN 1 ===")
 
+    image_path = Path("lessons/lesson_07/sample.jpg")
+
     attachment = types.Part(
         inline_data=types.Blob(
-            data=b"Lesson7 attachment test",
-            mime_type="text/plain",
-            display_name="sample.txt",
+            data=image_path.read_bytes(),
+            mime_type="image/png",
+            display_name=image_path.name,
         )
     )
 
     await run_message(
-       "添付ファイルの内容を教えてください。bashToolは一切使わないで",
+       "以下の画像は何？",
         attachment=attachment,
     )
-    
 
 if __name__ == "__main__":
     asyncio.run(main())
