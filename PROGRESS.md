@@ -10,21 +10,19 @@
 - **Lesson 5: 完了**
 - **Lesson 6: 完了**
 - **Lesson 7: 完了**
-- Artifact と Workspace の責務を分離し、Agent 自身には Artifact API を公開しない構成を確認済み。
-- User attachment を ArtifactService に登録し、新規 input だけを Sandbox の `workspace/input/` へ materialize する経路を実装済み。
-- `input / work / output` の Workspace file protocol を System Instruction に定義し、現在の input file を volatile reminder として Model context に追加する構成を確認済み。
-- `before_agent / after_agent` で output の `size + mtime` metadata を比較し、変更された最終成果物だけを Artifact version として保存する構成に整理済み。
-- Event の `artifact_delta` を使って生成・更新された output Artifact を追跡し、InMemoryArtifactService が消える前に host filesystem へ export する経路を実装済み。
-- Skill based processing は Lesson 7 では意図的にスキップし、Artifact ↔ Workspace I/O pipeline の理解にスコープを限定した。
+- **Lesson 8: 完了**
+- Lesson 7 の App を `agents_dir` 配下の package に整理し、ADK 標準 `adk api_server` から読み込める構成にした。自前 FastAPI routing は追加していない。
+- OpenAPI から Session / `/run` / `/run_sse` / Artifact API を確認し、client から Session 作成・text chat・streaming・attachment 送信・output Artifact 取得までを HTTP 経由で実行済み。
+- `WorkspaceIOPlugin` を変更せずに、API 経由の attachment が Artifact → `workspace/input/` へ流れることを確認済み。Lesson 7 の Host export は Artifact API からの取得に置き換えた。
+- Skill を Environment 作成時に Sandbox の `skills/` へコピーし、LHA の `HorizonSkillToolset` で ADK 標準の Skill 前置きを短い1文に差し替えた。`scripts/` 付き Skill を `bash` で実行できることを確認済み。
+- LHA の system prompt を元にした英語の `static_instruction` に置き換えた。
+- `read` に offset / limit と画像 / PDF 対応、一意一致の `edit` を追加した。media は ADK の multimodal function response で Tool result として履歴に残る方式（Strands harness と同じ）を採用した。
+- 複数 Session で会話履歴・Workspace・Artifact が分離されることを E2E client（`client.py`）で確認済み。
 
 ## 次に始めるセクション
 
-**Lesson 8: ADK API Server / Final Integration — 未着手**
+**なし — 学習プロジェクト完了**
 
-Lesson 8 をこの学習プロジェクトの最終 Lesson とする。
+Lesson 0〜8 で、Agent / Tool / MCP / Skill / Artifact / Workspace / Sandbox / Callback / Plugin / Context Management / File I/O を ADK 標準 API server に載せ、外部 client から利用できる Agent backend までつないだ。
 
-Lesson 0〜7 で作成した Agent / Tool / MCP / Skill / Artifact / Workspace / Sandbox / Callback / Plugin / Context Management / File I/O を、ADK 標準 API server に載せて外部 client から利用できる状態まで統合する。
-
-自前 FastAPI API の設計は行わず、ADK 標準 serving boundary を使って Session / chat / streaming / attachment / output Artifact の E2E を確認する。
-
-詳細は `lessons/lesson_08/LESSON_08_PLAN.md` を参照。
+これをもって `study-adk-from-scratch` の学習プロジェクトを完了とする。

@@ -41,12 +41,23 @@
    │  ├─ skills/
    │  ├─ tools/
    │  └─ horizon/   # Sandbox / Environment実装を継続利用
-   └─ lesson_07/   # Artifact ↔ Workspace I/O
-      ├─ LESSON_07.md
-      ├─ LESSON_07_PLAN.md
-      ├─ agent.py / runner.py
-      ├─ callback.py / plugin.py
-      ├─ docker_sandbox_provider.py
-      ├─ tools/
-      └─ horizon/   # Sandbox / Environment実装を継続利用
+   ├─ lesson_07/   # Artifact ↔ Workspace I/O
+   │  ├─ LESSON_07.md
+   │  ├─ LESSON_07_PLAN.md
+   │  ├─ agent.py / runner.py
+   │  ├─ callback.py / plugin.py
+   │  ├─ docker_sandbox_provider.py
+   │  ├─ tools/
+   │  └─ horizon/   # Sandbox / Environment実装を継続利用
+   └─ lesson_08/   # ADK API Server / Final Integration
+      ├─ LESSON_08.md
+      ├─ LESSON_08_PLAN.md
+      ├─ client.py
+      └─ agents/general_agent/
+         ├─ agent.py
+         ├─ callback.py / plugin.py / system_prompt.py
+         ├─ docker_sandbox_provider.py
+         ├─ skills/
+         ├─ tools/
+         └─ horizon/   # Sandbox / Environment / SkillToolset実装
 ```
